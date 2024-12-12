@@ -1,49 +1,39 @@
-import express from "express";
 import dotenv from "dotenv";
-import bodyParser from "body-parser";
-import cors from "cors";
 import connectDB from "./db/db.js";
-import userRoutes from "./routes/userRoutes.js";
+import { app } from "./app.js";
 
-// Load environment variables
 dotenv.config({
   path: "./env",
 });
 
-// Connect to the database
-connectDB();
-
-const app = express();
-
-// Middleware
-app.use(bodyParser.json());
-app.use(cors());
-
-// Routes
-app.use("/api/users", userRoutes);
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Handle Uncaught Exceptions
+process.on("uncaughtException", (err) => {
+  console.error("❌ UNCAUGHT EXCEPTION! Shutting down...");
+  console.error(err.name, err.message);
+  process.exit(1); // Forcefully exit
 });
 
-/*
-import express from "express"
-const app = express()
+const startServer = async () => {
+  try {
+    await connectDB();
+    console.log("✅ MongoDB Connected Successfully!");
 
-;( async () => {
-    try {
-       await mongoose.connect(`${process.env.MONGODB_URI} /${DB_NAME}`)
-       app.on("error", (error) =>{
-        console.log("Error:",error);
-        throw error
-       })
+    const PORT = process.env.PORT || 8000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running at port: ${PORT}`);
+    });
+  } catch (error) {
+    console.error("❌ MongoDB Connection Failed:", error.message);
+    process.exit(1); // Exit process if DB fails
+  }
+};
 
-       app.listen(process.env.PORT, () =>{
-        console.log(`App is listening on port ${process.env.PORT}`)
-       })
-    } catch (error) {
-        console.error("ERROR:",error)
-        throw err
-    }
-})() */
+// Start the server
+startServer();
+
+// Handle Unhandled Promise Rejections
+process.on("unhandledRejection", (err) => {
+  console.error("❌ UNHANDLED REJECTION! Shutting down...");
+  console.error(err.name, err.message);
+  process.exit(1);
+});
